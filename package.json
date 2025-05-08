@@ -1,0 +1,23 @@
+{
+  "name": "booking-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "tools/*"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter=@booking/frontend dev",
+    "build": "node tools/metrics/build-metrics.js && pnpm --filter=@booking/frontend build",
+    "start": "pnpm --filter=@booking/frontend start",
+    "lint": "eslint .",
+    "metrics:build": "node tools/metrics/build-metrics.js",
+    "metrics:deploy": "node tools/metrics/deploy-metrics.js"
+  },
+  "devDependencies": {
+    "eslint": "^8.54.0",
+    "eslint-config-next": "14.2.16",
+    "eslint-plugin-import": "^2.29.0",
+    "typescript": "^5.2.2"
+  },
+  "packageManager": "pnpm@8.10.0"
+}
