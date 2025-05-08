@@ -1,0 +1,37 @@
+[
+  {
+    "commitHash": "abcdef123456789",
+    "commitTime": 1746813600000,
+    "deployFinishTime": 1746814500000,
+    "commitToDeployTime": 900000,
+    "timestamp": "2025-05-07T12:05:00Z"
+  },
+  {
+    "commitHash": "bcdef1234567890",
+    "commitTime": 1746822600000,
+    "deployFinishTime": 1746823500000,
+    "commitToDeployTime": 900000,
+    "timestamp": "2025-05-07T14:35:00Z"
+  },
+  {
+    "commitHash": "cdef12345678901",
+    "commitTime": 1746834300000,
+    "deployFinishTime": 1746835200000,
+    "commitToDeployTime": 900000,
+    "timestamp": "2025-05-07T17:50:00Z"
+  },
+  {
+    "commitHash": "defg123456789012",
+    "commitTime": 1746874500000,
+    "deployFinishTime": 1746875400000,
+    "commitToDeployTime": 900000,
+    "timestamp": "2025-05-08T09:20:00Z"
+  },
+  {
+    "commitHash": "efgh1234567890123",
+    "commitTime": 1746889200000,
+    "deployFinishTime": 1746890100000,
+    "commitToDeployTime": 900000,
+    "timestamp": "2025-05-08T13:25:00Z"
+  }
+]
