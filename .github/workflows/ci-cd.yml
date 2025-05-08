@@ -57,11 +57,6 @@ jobs:
       - name: Создание директории для метрик
         run: mkdir -p metrics-data
       
-      - name: Попытка копирования схемы Prisma
-        run: |
-          mkdir -p packages/frontend/prisma
-          cp -r ../../../Diplom/booking/prisma/schema.prisma packages/frontend/prisma/ || echo "Ошибка копирования схемы Prisma, но мы продолжаем процесс"
-      
       - name: Сборка общих пакетов
         run: pnpm --filter=@booking/common build || echo "Ошибка сборки общих пакетов, но мы продолжаем процесс"
       
