@@ -11,9 +11,16 @@ fs.ensureDirSync(METRICS_DIR);
 const DEPLOY_METRICS_FILE = path.join(METRICS_DIR, 'deploy-metrics.json');
 
 // Получаем хеш коммита и время коммита
-const commitHash = process.env.GITHUB_SHA || execSync('git rev-parse HEAD').toString().trim();
-const commitTimeStr = execSync(`git show -s --format=%ct ${commitHash}`).toString().trim();
-const commitTime = parseInt(commitTimeStr) * 1000; // конвертируем из секунд в миллисекунды
+let commitHash, commitTime;
+try {
+  commitHash = process.env.GITHUB_SHA || execSync('git rev-parse HEAD').toString().trim();
+  const commitTimeStr = execSync(`git show -s --format=%ct ${commitHash}`).toString().trim();
+  commitTime = parseInt(commitTimeStr) * 1000; // конвертируем из секунд в миллисекунды
+} catch (error) {
+  console.warn('Не удалось получить информацию о коммите:', error.message);
+  commitHash = 'unknown';
+  commitTime = Date.now() - 60000; // Условное время коммита (1 минуту назад)
+}
 
 // Текущее время - это время завершения деплоя
 const deployFinishTime = Date.now();
@@ -31,7 +38,11 @@ const metrics = {
 // Загружаем предыдущие метрики, если они существуют
 let allMetrics = [];
 if (fs.existsSync(DEPLOY_METRICS_FILE)) {
-  allMetrics = JSON.parse(fs.readFileSync(DEPLOY_METRICS_FILE, 'utf8'));
+  try {
+    allMetrics = JSON.parse(fs.readFileSync(DEPLOY_METRICS_FILE, 'utf8'));
+  } catch (error) {
+    console.warn('Не удалось прочитать предыдущие метрики деплоя:', error.message);
+  }
 }
 
 // Добавляем новые метрики
