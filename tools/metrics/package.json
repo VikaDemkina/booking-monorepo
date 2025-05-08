@@ -1,0 +1,12 @@
+{
+  "name": "@booking/metrics",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build-metrics": "node build-metrics.js",
+    "deploy-metrics": "node deploy-metrics.js"
+  },
+  "dependencies": {
+    "fs-extra": "^11.1.1"
+  }
+}
