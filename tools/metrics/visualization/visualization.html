@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Метрики CI/CD - Booking Monorepo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 5px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #3498db;
+            border-left: 4px solid #3498db;
+            padding-left: 10px;
+            margin-top: 30px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            flex: 1;
+            min-width: 250px;
+            background: #fff;
+            margin: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 5px;
+        }
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #777;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .tab.active {
+            border: 1px solid #ddd;
+            border-bottom: 1px solid white;
+            border-radius: 5px 5px 0 0;
+            margin-bottom: -1px;
+            background-color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        #buildTimes, #deployTimes {
+            width: 100%;
+            height: 300px;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            background-color: white;
+        }
+        .chart-placeholder {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            text-align: center;
+            font-style: italic;
+            color: #777;
+        }
+        .demo-data-notice {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Метрики CI/CD Booking Monorepo</h1>
+        
+        <div id="demo-data-notice" class="demo-data-notice" style="display: none;">
+            Внимание! Отображаются демонстрационные данные, так как файлы метрик не найдены или недоступны.
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Среднее время сборки</h3>
+                <div id="avg-build-time" class="stat-value">-</div>
+                <p>секунд</p>
+            </div>
+            <div class="stat-card">
+                <h3>Среднее время деплоя</h3>
+                <div id="avg-deploy-time" class="stat-value">-</div>
+                <p>секунд</p>
+            </div>
+            <div class="stat-card">
+                <h3>Всего сборок</h3>
+                <div id="total-builds" class="stat-value">-</div>
+                <p>запусков</p>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="build-metrics">Метрики сборки</div>
+            <div class="tab" data-tab="deploy-metrics">Метрики деплоя</div>
+        </div>
+        
+        <div id="build-metrics" class="tab-content active">
+            <h2>Время сборки проекта</h2>
+            <div id="buildTimes">
+                <div class="chart-placeholder">
+                    График недоступен без библиотеки Chart.js. Используйте таблицу для анализа данных.
+                </div>
+            </div>
+            
+            <h2>Таблица метрик сборки</h2>
+            <div id="build-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Дата и время</th>
+                            <th>Время сборки (сек)</th>
+                            <th>Хеш коммита</th>
+                        </tr>
+                    </thead>
+                    <tbody id="build-table-body">
+                        <!-- Данные будут добавлены через JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="deploy-metrics" class="tab-content">
+            <h2>Время от коммита до деплоя</h2>
+            <div id="deployTimes">
+                <div class="chart-placeholder">
+                    График недоступен без библиотеки Chart.js. Используйте таблицу для анализа данных.
+                </div>
+            </div>
+            
+            <h2>Таблица метрик деплоя</h2>
+            <div id="deploy-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Дата и время</th>
+                            <th>Время от коммита до деплоя (сек)</th>
+                            <th>Хеш коммита</th>
+                        </tr>
+                    </thead>
+                    <tbody id="deploy-table-body">
+                        <!-- Данные будут добавлены через JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Demo data for visualization
+        const demoBuildMetrics = [
+            { timestamp: '2025-05-08T12:00:00Z', buildTime: 45000, commitHash: 'abcdef123456789' },
+            { timestamp: '2025-05-08T14:30:00Z', buildTime: 42000, commitHash: 'bcdef1234567890' },
+            { timestamp: '2025-05-08T17:45:00Z', buildTime: 48000, commitHash: 'cdef12345678901' },
+            { timestamp: '2025-05-09T09:15:00Z', buildTime: 39000, commitHash: 'defg123456789012' },
+            { timestamp: '2025-05-09T13:20:00Z', buildTime: 51000, commitHash: 'efgh1234567890123' }
+        ];
+        
+        const demoDeployMetrics = [
+            { timestamp: '2025-05-08T12:05:00Z', commitToDeployTime: 180000, commitHash: 'abcdef123456789' },
+            { timestamp: '2025-05-08T14:35:00Z', commitToDeployTime: 175000, commitHash: 'bcdef1234567890' },
+            { timestamp: '2025-05-08T17:50:00Z', commitToDeployTime: 190000, commitHash: 'cdef12345678901' },
+            { timestamp: '2025-05-09T09:20:00Z', commitToDeployTime: 165000, commitHash: 'defg123456789012' },
+            { timestamp: '2025-05-09T13:25:00Z', commitToDeployTime: 200000, commitHash: 'efgh1234567890123' }
+        ];
+        
+        // Format a date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString();
+        }
+        
+        // Show demo data notice
+        function showDemoDataNotice() {
+            document.getElementById('demo-data-notice').style.display = 'block';
+        }
+        
+        // Update build metrics table
+        function updateBuildTable(metrics) {
+            const tableBody = document.getElementById('build-table-body');
+            tableBody.innerHTML = '';
+            
+            if (!metrics || metrics.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="empty-state">Нет данных о сборках</td></tr>';
+                return;
+            }
+            
+            metrics.forEach(metric => {
+                const row = document.createElement('tr');
+                
+                const dateCell = document.createElement('td');
+                dateCell.textContent = formatDate(metric.timestamp);
+                
+                const timeCell = document.createElement('td');
+                timeCell.textContent = (metric.buildTime / 1000).toFixed(2);
+                
+                const hashCell = document.createElement('td');
+                hashCell.textContent = metric.commitHash.substring(0, 7);
+                
+                row.appendChild(dateCell);
+                row.appendChild(timeCell);
+                row.appendChild(hashCell);
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Update deploy metrics table
+        function updateDeployTable(metrics) {
+            const tableBody = document.getElementById('deploy-table-body');
+            tableBody.innerHTML = '';
+            
+            if (!metrics || metrics.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="empty-state">Нет данных о деплоях</td></tr>';
+                return;
+            }
+            
+            metrics.forEach(metric => {
+                const row = document.createElement('tr');
+                
+                const dateCell = document.createElement('td');
+                dateCell.textContent = formatDate(metric.timestamp);
+                
+                const timeCell = document.createElement('td');
+                timeCell.textContent = (metric.commitToDeployTime / 1000).toFixed(2);
+                
+                const hashCell = document.createElement('td');
+                hashCell.textContent = metric.commitHash.substring(0, 7);
+                
+                row.appendChild(dateCell);
+                row.appendChild(timeCell);
+                row.appendChild(hashCell);
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Update summary statistics
+        function updateStats(buildMetrics, deployMetrics) {
+            if (buildMetrics && buildMetrics.length > 0) {
+                const totalBuilds = buildMetrics.length;
+                const avgBuildTime = buildMetrics.reduce((sum, metric) => sum + metric.buildTime, 0) / totalBuilds / 1000;
+                
+                document.getElementById('avg-build-time').textContent = avgBuildTime.toFixed(2);
+                document.getElementById('total-builds').textContent = totalBuilds;
+            }
+            
+            if (deployMetrics && deployMetrics.length > 0) {
+                const avgDeployTime = deployMetrics.reduce((sum, metric) => sum + metric.commitToDeployTime, 0) / deployMetrics.length / 1000;
+                document.getElementById('avg-deploy-time').textContent = avgDeployTime.toFixed(2);
+            }
+        }
+
+        // Tab switching logic
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+        
+        // Try to fetch metrics data
+        async function loadMetricsData() {
+            let buildMetrics = null;
+            let deployMetrics = null;
+            let usingDemoData = false;
+            
+            try {
+                // Try to load build metrics
+                const buildResponse = await fetch('../../metrics-data/build-metrics.json');
+                if (buildResponse.ok) {
+                    buildMetrics = await buildResponse.json();
+                }
+            } catch (error) {
+                console.error('Error loading build metrics:', error);
+            }
+            
+            try {
+                // Try to load deploy metrics
+                const deployResponse = await fetch('../../metrics-data/deploy-metrics.json');
+                if (deployResponse.ok) {
+                    deployMetrics = await deployResponse.json();
+                }
+            } catch (error) {
+                console.error('Error loading deploy metrics:', error);
+            }
+            
+            // If no real data, use demo data
+            if (!buildMetrics || !deployMetrics) {
+                buildMetrics = demoBuildMetrics;
+                deployMetrics = demoDeployMetrics;
+                usingDemoData = true;
+                showDemoDataNotice();
+            }
+            
+            // Update UI with metrics
+            updateBuildTable(buildMetrics);
+            updateDeployTable(deployMetrics);
+            updateStats(buildMetrics, deployMetrics);
+        }
+        
+        // Initialize data loading
+        window.addEventListener('DOMContentLoaded', loadMetricsData);
+    </script>
+</body>
+</html>
