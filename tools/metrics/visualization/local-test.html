@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Метрики CI/CD - Локальный тест</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 5px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #3498db;
+            border-left: 4px solid #3498db;
+            padding-left: 10px;
+            margin-top: 30px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            flex: 1;
+            min-width: 250px;
+            background: #fff;
+            margin: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 5px;
+        }
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #777;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .tab.active {
+            border: 1px solid #ddd;
+            border-bottom: 1px solid white;
+            border-radius: 5px 5px 0 0;
+            margin-bottom: -1px;
+            background-color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .instruction {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Метрики CI/CD Booking Monorepo - Локальное тестирование</h1>
+        
+        <div class="instruction">
+            <h3>Как использовать эту страницу</h3>
+            <p>Эта страница показывает метрики CI/CD из тестовых данных. Работает полностью локально, без внешних зависимостей.</p>
+            <p><strong>Примечание:</strong> Чтобы увидеть реальные данные метрик из вашего проекта, скопируйте файлы <code>build-metrics.json</code> и <code>deploy-metrics.json</code> из директории <code>metrics-data</code> в директорию <code>tools/metrics/visualization/sample-data/</code>.</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Среднее время сборки</h3>
+                <div id="avg-build-time" class="stat-value">-</div>
+                <p>секунд</p>
+            </div>
+            <div class="stat-card">
+                <h3>Среднее время деплоя</h3>
+                <div id="avg-deploy-time" class="stat-value">-</div>
+                <p>секунд</p>
+            </div>
+            <div class="stat-card">
+                <h3>Всего сборок</h3>
+                <div id="total-builds" class="stat-value">-</div>
+                <p>запусков</p>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="build-metrics">Метрики сборки</div>
+            <div class="tab" data-tab="deploy-metrics">Метрики деплоя</div>
+        </div>
+        
+        <div id="build-metrics" class="tab-content active">
+            <h2>Таблица метрик сборки</h2>
+            <div id="build-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Дата и время</th>
+                            <th>Время сборки (сек)</th>
+                            <th>Хеш коммита</th>
+                        </tr>
+                    </thead>
+                    <tbody id="build-table-body">
+                        <!-- Данные будут добавлены через JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="deploy-metrics" class="tab-content">
+            <h2>Таблица метрик деплоя</h2>
+            <div id="deploy-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Дата и время</th>
+                            <th>Время от коммита до деплоя (сек)</th>
+                            <th>Хеш коммита</th>
+                        </tr>
+                    </thead>
+                    <tbody id="deploy-table-body">
+                        <!-- Данные будут добавлены через JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Встроенные данные для тестирования
+        const buildMetricsData = [
+          {
+            "buildTime": 45000,
+            "timestamp": "2025-05-07T12:00:00Z",
+            "commitHash": "abcdef123456789"
+          },
+          {
+            "buildTime": 42000,
+            "timestamp": "2025-05-07T14:30:00Z",
+            "commitHash": "bcdef1234567890"
+          },
+          {
+            "buildTime": 48000,
+            "timestamp": "2025-05-07T17:45:00Z",
+            "commitHash": "cdef12345678901"
+          },
+          {
+            "buildTime": 39000,
+            "timestamp": "2025-05-08T09:15:00Z",
+            "commitHash": "defg123456789012"
+          },
+          {
+            "buildTime": 51000,
+            "timestamp": "2025-05-08T13:20:00Z",
+            "commitHash": "efgh1234567890123"
+          }
+        ];
+        
+        const deployMetricsData = [
+          {
+            "commitHash": "abcdef123456789",
+            "commitTime": 1746813600000,
+            "deployFinishTime": 1746814500000,
+            "commitToDeployTime": 900000,
+            "timestamp": "2025-05-07T12:05:00Z"
+          },
+          {
+            "commitHash": "bcdef1234567890",
+            "commitTime": 1746822600000,
+            "deployFinishTime": 1746823500000,
+            "commitToDeployTime": 900000,
+            "timestamp": "2025-05-07T14:35:00Z"
+          },
+          {
+            "commitHash": "cdef12345678901",
+            "commitTime": 1746834300000,
+            "deployFinishTime": 1746835200000,
+            "commitToDeployTime": 900000,
+            "timestamp": "2025-05-07T17:50:00Z"
+          },
+          {
+            "commitHash": "defg123456789012",
+            "commitTime": 1746874500000,
+            "deployFinishTime": 1746875400000,
+            "commitToDeployTime": 900000,
+            "timestamp": "2025-05-08T09:20:00Z"
+          },
+          {
+            "commitHash": "efgh1234567890123",
+            "commitTime": 1746889200000,
+            "deployFinishTime": 1746890100000,
+            "commitToDeployTime": 900000,
+            "timestamp": "2025-05-08T13:25:00Z"
+          }
+        ];
+        
+        // Format a date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString();
+        }
+        
+        // Update build metrics table
+        function updateBuildTable(metrics) {
+            const tableBody = document.getElementById('build-table-body');
+            tableBody.innerHTML = '';
+            
+            if (!metrics || metrics.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="empty-state">Нет данных о сборках</td></tr>';
+                return;
+            }
+            
+            metrics.forEach(metric => {
+                const row = document.createElement('tr');
+                
+                const dateCell = document.createElement('td');
+                dateCell.textContent = formatDate(metric.timestamp);
+                
+                const timeCell = document.createElement('td');
+                timeCell.textContent = (metric.buildTime / 1000).toFixed(2);
+                
+                const hashCell = document.createElement('td');
+                hashCell.textContent = metric.commitHash.substring(0, 7);
+                
+                row.appendChild(dateCell);
+                row.appendChild(timeCell);
+                row.appendChild(hashCell);
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Update deploy metrics table
+        function updateDeployTable(metrics) {
+            const tableBody = document.getElementById('deploy-table-body');
+            tableBody.innerHTML = '';
+            
+            if (!metrics || metrics.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="empty-state">Нет данных о деплоях</td></tr>';
+                return;
+            }
+            
+            metrics.forEach(metric => {
+                const row = document.createElement('tr');
+                
+                const dateCell = document.createElement('td');
+                dateCell.textContent = formatDate(metric.timestamp);
+                
+                const timeCell = document.createElement('td');
+                timeCell.textContent = (metric.commitToDeployTime / 1000).toFixed(2);
+                
+                const hashCell = document.createElement('td');
+                hashCell.textContent = metric.commitHash.substring(0, 7);
+                
+                row.appendChild(dateCell);
+                row.appendChild(timeCell);
+                row.appendChild(hashCell);
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Update summary statistics
+        function updateStats(buildMetrics, deployMetrics) {
+            if (buildMetrics && buildMetrics.length > 0) {
+                const totalBuilds = buildMetrics.length;
+                const avgBuildTime = buildMetrics.reduce((sum, metric) => sum + metric.buildTime, 0) / totalBuilds / 1000;
+                
+                document.getElementById('avg-build-time').textContent = avgBuildTime.toFixed(2);
+                document.getElementById('total-builds').textContent = totalBuilds;
+            }
+            
+            if (deployMetrics && deployMetrics.length > 0) {
+                const avgDeployTime = deployMetrics.reduce((sum, metric) => sum + metric.commitToDeployTime, 0) / deployMetrics.length / 1000;
+                document.getElementById('avg-deploy-time').textContent = avgDeployTime.toFixed(2);
+            }
+        }
+        
+        // Tab switching logic
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+        
+        // Try to load the sample data
+        async function loadSampleData() {
+            try {
+                const buildResponse = await fetch('./sample-data/build-metrics.json');
+                const deployResponse = await fetch('./sample-data/deploy-metrics.json');
+                
+                let buildMetrics, deployMetrics;
+                
+                if (buildResponse.ok) {
+                    buildMetrics = await buildResponse.json();
+                } else {
+                    buildMetrics = buildMetricsData;
+                }
+                
+                if (deployResponse.ok) {
+                    deployMetrics = await deployResponse.json();
+                } else {
+                    deployMetrics = deployMetricsData;
+                }
+                
+                updateBuildTable(buildMetrics);
+                updateDeployTable(deployMetrics);
+                updateStats(buildMetrics, deployMetrics);
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                // Fall back to built-in data
+                updateBuildTable(buildMetricsData);
+                updateDeployTable(deployMetricsData);
+                updateStats(buildMetricsData, deployMetricsData);
+            }
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', loadSampleData);
+    </script>
+</body>
+</html>
