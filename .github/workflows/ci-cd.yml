@@ -57,6 +57,21 @@ jobs:
       - name: Создание директории для метрик
         run: mkdir -p metrics-data
       
+      - name: Создание .env файла из примера
+        run: |
+          if [ -f packages/frontend/.env.example ]; then
+            cp packages/frontend/.env.example packages/frontend/.env
+            echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test" > packages/frontend/.env
+            echo "NEXTAUTH_SECRET=test-secret" >> packages/frontend/.env
+            echo "NEXTAUTH_URL=http://localhost:3000" >> packages/frontend/.env
+            echo ".env файл создан"
+          else
+            echo "Файл .env.example не найден"
+            echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test" > packages/frontend/.env
+            echo "NEXTAUTH_SECRET=test-secret" >> packages/frontend/.env
+            echo "NEXTAUTH_URL=http://localhost:3000" >> packages/frontend/.env
+          fi
+      
       - name: Сборка общих пакетов
         run: pnpm --filter=@booking/common build || echo "Ошибка сборки общих пакетов, но мы продолжаем процесс"
       
@@ -108,6 +123,7 @@ jobs:
       - name: Вывод метрик
         run: |
           echo "Метрики сборки:"
+          ls -la metrics-data/ || echo "Директория не найдена"
           cat metrics-data/build-metrics.json || echo "Файл метрик сборки не найден"
           echo "Метрики деплоя:"
           cat metrics-data/deploy-metrics.json || echo "Файл метрик деплоя не найден"
